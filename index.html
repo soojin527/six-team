@@ -1,0 +1,1201 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>바이브 코딩 발표자료</title>
+  <style>
+    /* =========================================
+       CSS 변수 & 전역 초기화
+    ========================================= */
+    :root {
+      --bg-main: #0d1b2a;
+      --bg-slide: #111f30;
+      --bg-card: #162840;
+      --bg-card2: #1a3050;
+      --accent: #38bdf8;
+      --accent2: #0ea5e9;
+      --accent-soft: rgba(56,189,248,0.13);
+      --accent-soft2: rgba(56,189,248,0.22);
+      --text-primary: #f0f6ff;
+      --text-secondary: #93b5d4;
+      --text-muted: #5a7fa0;
+      --border: rgba(56,189,248,0.18);
+      --radius: 12px;
+      --shadow: 0 4px 32px rgba(0,0,0,0.4);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-main);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* =========================================
+       진행률 바
+    ========================================= */
+    #progress-bar-wrap {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.07);
+      z-index: 100;
+    }
+    #progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      transition: width 0.35s ease;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* =========================================
+       슬라이드 컨테이너
+    ========================================= */
+    #slide-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(20px, 4vh, 48px) clamp(24px, 6vw, 80px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(40px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+    .slide.exit-left {
+      opacity: 0;
+      transform: translateX(-40px);
+    }
+
+    /* =========================================
+       공통 슬라이드 구성 요소
+    ========================================= */
+    .slide-badge {
+      display: inline-block;
+      background: var(--accent-soft2);
+      color: var(--accent);
+      font-size: clamp(11px, 1.2vw, 14px);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border-radius: 100px;
+      border: 1px solid var(--border);
+      margin-bottom: 10px;
+      width: fit-content;
+    }
+    .slide-title {
+      font-size: clamp(24px, 3.6vw, 48px);
+      font-weight: 800;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: clamp(10px, 2vh, 20px);
+    }
+    .slide-title span.hl { color: var(--accent); }
+    .slide-subtitle {
+      font-size: clamp(14px, 1.7vw, 21px);
+      color: var(--text-secondary);
+      margin-bottom: clamp(12px, 2.5vh, 28px);
+      line-height: 1.5;
+    }
+    .divider {
+      height: 2px;
+      width: 60px;
+      background: linear-gradient(90deg, var(--accent), transparent);
+      margin-bottom: clamp(14px, 2.5vh, 28px);
+      border-radius: 2px;
+    }
+
+    /* 카드 그리드 */
+    .card-grid {
+      display: grid;
+      gap: clamp(8px, 1.5vw, 16px);
+    }
+    .card-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .card-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2vw, 22px);
+    }
+    .card.accent-top { border-top: 3px solid var(--accent); }
+    .card-icon {
+      font-size: clamp(18px, 2.5vw, 30px);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .card h3 {
+      font-size: clamp(13px, 1.5vw, 18px);
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .card p {
+      font-size: clamp(12px, 1.2vw, 15px);
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* 태그 */
+    .tag {
+      display: inline-block;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: clamp(11px, 1.1vw, 14px);
+      font-weight: 600;
+      padding: 4px 13px;
+      margin: 3px;
+    }
+
+    /* 비교 레이아웃 */
+    .compare-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(10px, 2vw, 20px);
+      flex: 1;
+    }
+    .compare-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2vw, 22px);
+    }
+    .compare-box.accent { border-top: 3px solid var(--accent); }
+    .compare-box.neutral { border-top: 3px solid #475569; }
+    .compare-box h3 {
+      font-size: clamp(13px, 1.5vw, 17px);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .compare-box.accent h3 { color: var(--accent); }
+    .compare-box.neutral h3 { color: #94a3b8; }
+    .compare-box ul { list-style: none; }
+    .compare-box ul li {
+      font-size: clamp(12px, 1.2vw, 15px);
+      color: var(--text-secondary);
+      line-height: 1.65;
+      padding: 5px 0;
+      padding-left: 18px;
+      position: relative;
+    }
+    .compare-box.accent ul li::before { content: "▸"; position: absolute; left: 0; color: var(--accent); }
+    .compare-box.neutral ul li::before { content: "–"; position: absolute; left: 0; color: #475569; }
+
+    /* 단계형 플로우 */
+    .flow-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(8px, 1.2vw, 14px) clamp(10px, 1.4vw, 16px);
+      font-size: clamp(11px, 1.1vw, 13px);
+      color: var(--text-secondary);
+      flex: 1;
+      min-width: 80px;
+      text-align: center;
+    }
+    .flow-step .step-num {
+      display: block;
+      font-size: clamp(13px, 1.5vw, 18px);
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .flow-arrow {
+      font-size: clamp(12px, 1.4vw, 18px);
+      color: var(--text-muted);
+      margin-top: clamp(14px, 1.8vw, 22px);
+      flex-shrink: 0;
+    }
+
+    /* 포인트 박스 */
+    .point-box {
+      background: var(--accent-soft);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: var(--radius);
+      padding: clamp(10px, 1.5vw, 18px) clamp(14px, 2vw, 22px);
+      font-size: clamp(12px, 1.3vw, 16px);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-top: auto;
+    }
+    .point-box strong { color: var(--accent); }
+
+    /* 불릿 리스트 */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(6px, 1.2vh, 12px);
+      flex: 1;
+    }
+    .bullet-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: clamp(13px, 1.35vw, 17px);
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+    .bullet-list li .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin-top: 6px;
+      flex-shrink: 0;
+    }
+    .bullet-list li strong { color: var(--text-primary); }
+
+    /* 경고 박스 */
+    .warn-box {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-left: 4px solid #ef4444;
+      border-radius: var(--radius);
+      padding: clamp(10px, 1.5vw, 16px) clamp(14px, 2vw, 20px);
+      font-size: clamp(12px, 1.2vw, 15px);
+      color: #fca5a5;
+      line-height: 1.65;
+    }
+
+    /* 2열 콘텐츠 */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(10px, 2vw, 20px);
+      flex: 1;
+    }
+
+    /* 목차 */
+    .toc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(8px, 1.5vw, 16px);
+      flex: 1;
+    }
+    .toc-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(14px, 2.5vw, 26px);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .toc-num {
+      font-size: clamp(22px, 3vw, 38px);
+      font-weight: 900;
+      color: var(--accent-soft2);
+      line-height: 1;
+      min-width: 40px;
+    }
+    .toc-text h4 {
+      font-size: clamp(13px, 1.5vw, 18px);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .toc-text p {
+      font-size: clamp(11px, 1.05vw, 14px);
+      color: var(--text-muted);
+    }
+
+    /* =========================================
+       슬라이드 1 - 제목
+    ========================================= */
+    .slide-hero {
+      justify-content: center;
+      align-items: flex-start;
+      background: radial-gradient(ellipse at 70% 30%, rgba(14,165,233,0.12) 0%, transparent 60%),
+                  var(--bg-slide);
+    }
+    .hero-kw {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: clamp(14px, 2.5vh, 28px);
+    }
+    .hero-title {
+      font-size: clamp(40px, 7vw, 88px);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-bottom: clamp(8px, 1.5vh, 16px);
+    }
+    .hero-title .accent-text {
+      color: transparent;
+      -webkit-text-stroke: 2px var(--accent);
+    }
+    .hero-sub {
+      font-size: clamp(14px, 1.8vw, 22px);
+      color: var(--text-secondary);
+      margin-bottom: clamp(20px, 4vh, 44px);
+    }
+    .hero-meta {
+      display: flex;
+      gap: clamp(16px, 3vw, 32px);
+      flex-wrap: wrap;
+    }
+    .hero-meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .hero-meta-item label {
+      font-size: clamp(10px, 1vw, 12px);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .hero-meta-item span {
+      font-size: clamp(13px, 1.4vw, 16px);
+      color: var(--text-secondary);
+      border-bottom: 1px dashed var(--text-muted);
+      min-width: 120px;
+      padding-bottom: 2px;
+    }
+    .hero-deco {
+      position: absolute;
+      right: 5%;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: clamp(80px, 14vw, 180px);
+      opacity: 0.04;
+      pointer-events: none;
+      user-select: none;
+      font-weight: 900;
+      letter-spacing: -0.05em;
+    }
+
+    /* =========================================
+       슬라이드 15 - 종료
+    ========================================= */
+    .slide-end {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 50%, rgba(14,165,233,0.1) 0%, transparent 65%),
+                  var(--bg-slide);
+    }
+    .end-title {
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 900;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .end-qa {
+      font-size: clamp(18px, 2.8vw, 36px);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: clamp(20px, 3vh, 36px);
+    }
+    .ref-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2vw, 20px) clamp(18px, 3vw, 32px);
+      text-align: left;
+      max-width: 640px;
+      width: 100%;
+    }
+    .ref-box h4 {
+      font-size: clamp(12px, 1.2vw, 15px);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .ref-box p {
+      font-size: clamp(12px, 1.15vw, 14px);
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+    .ref-box a { color: var(--accent); text-decoration: none; word-break: break-all; }
+
+    /* =========================================
+       하단 컨트롤 바
+    ========================================= */
+    #controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px clamp(16px, 4vw, 48px);
+      background: rgba(13,27,42,0.92);
+      backdrop-filter: blur(8px);
+      border-top: 1px solid rgba(56,189,248,0.1);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .ctrl-btn {
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 16px;
+      font-size: clamp(12px, 1.2vw, 14px);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .ctrl-btn:hover:not(:disabled) {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    .ctrl-btn:disabled {
+      opacity: 0.28;
+      cursor: not-allowed;
+    }
+    #slide-num {
+      font-size: clamp(12px, 1.2vw, 14px);
+      color: var(--text-muted);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+    #slide-num span { color: var(--accent); }
+    .ctrl-right { display: flex; gap: 8px; align-items: center; }
+
+    /* =========================================
+       슬라이드 특이 레이아웃들
+    ========================================= */
+    /* 슬라이드 9 - 반응/이용실태 통계 */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(8px, 1.5vw, 16px);
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2vw, 20px);
+    }
+    .stat-num {
+      font-size: clamp(24px, 3.5vw, 44px);
+      font-weight: 900;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-desc {
+      font-size: clamp(12px, 1.2vw, 14px);
+      color: var(--text-secondary);
+      line-height: 1.65;
+    }
+
+    /* 슬라이드 6 - 플로우 세로형 */
+    .vflow {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .vflow-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .vflow-num {
+      width: clamp(26px, 3vw, 36px);
+      height: clamp(26px, 3vw, 36px);
+      border-radius: 50%;
+      background: var(--accent);
+      color: #0d1b2a;
+      font-weight: 900;
+      font-size: clamp(11px, 1.3vw, 15px);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .vflow-text {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: clamp(7px, 1.1vh, 12px) clamp(12px, 1.5vw, 18px);
+      font-size: clamp(13px, 1.3vw, 16px);
+      color: var(--text-secondary);
+      flex: 1;
+      line-height: 1.55;
+    }
+    .vflow-text strong { color: var(--text-primary); }
+    .vflow-connector {
+      width: 3px;
+      height: clamp(6px, 1vh, 10px);
+      background: var(--border);
+      margin-left: calc(clamp(26px,3vw,36px)/2 - 1.5px);
+      border-radius: 2px;
+    }
+
+    /* 슬라이드 8 - 질문형 */
+    .question-box {
+      background: var(--bg-card2);
+      border: 2px solid var(--accent);
+      border-radius: var(--radius);
+      padding: clamp(12px, 2vw, 20px) clamp(16px, 2.5vw, 26px);
+      font-size: clamp(14px, 1.8vw, 22px);
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: clamp(10px, 2vh, 18px);
+      line-height: 1.4;
+    }
+
+    /* @media print */
+    @media print {
+      body { overflow: auto; height: auto; }
+      #progress-bar-wrap, #controls { display: none; }
+      .slide { position: relative; inset: auto; opacity: 1; pointer-events: auto;
+        transform: none; page-break-after: always; min-height: 100vh; }
+      .slide.active ~ .slide { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 진행률 바 -->
+<div id="progress-bar-wrap">
+  <div id="progress-bar"></div>
+</div>
+
+<!-- 슬라이드 컨테이너 -->
+<div id="slide-container">
+
+  <!-- ============================
+       슬라이드 1 : 제목
+  ============================= -->
+  <section class="slide slide-hero active">
+    <div class="hero-deco">VC</div>
+    <div class="hero-kw">
+      <span class="tag">AI</span>
+      <span class="tag">LLM</span>
+      <span class="tag">생성형 AI</span>
+      <span class="tag">2026</span>
+    </div>
+    <div class="hero-title">바이브<br><span class="accent-text">코딩</span></div>
+    <div class="hero-sub">생성형 AI 시대의 새로운 프로그래밍 방식</div>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <label>팀명</label>
+        <span>6조</span>
+      </div>
+      <div class="hero-meta-item">
+        <label>날짜</label>
+        <span>2026 / 06 / 04</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 2 : 목차
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Contents</div>
+    <div class="slide-title">발표 <span class="hl">목차</span></div>
+    <div class="divider"></div>
+    <div class="toc-grid">
+      <div class="toc-item">
+        <div class="toc-num">01</div>
+        <div class="toc-text">
+          <h4>개념</h4>
+          <p>정의 · 용어 등장 배경</p>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-num">02</div>
+        <div class="toc-text">
+          <h4>등장 배경</h4>
+          <p>안드레이 카파시 · LLM 발전</p>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-num">03</div>
+        <div class="toc-text">
+          <h4>작동 방식</h4>
+          <p>기존 코딩과의 차이 · 기본 흐름</p>
+        </div>
+      </div>
+      <div class="toc-item">
+        <div class="toc-num">04</div>
+        <div class="toc-text">
+          <h4>활용과 반응</h4>
+          <p>실태 · 사례 · 장점</p>
+        </div>
+      </div>
+      <div class="toc-item" style="grid-column: 1 / -1;">
+        <div class="toc-num">05</div>
+        <div class="toc-text">
+          <h4>한계와 시사점</h4>
+          <p>위험성 · 배포 문제 · 정리</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 3 : 정의
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Definition</div>
+    <div class="slide-title">바이브 코딩의 <span class="hl">정의</span></div>
+    <div class="divider"></div>
+    <div class="card-grid cols-3" style="margin-bottom: clamp(10px,2vh,18px);">
+      <div class="card accent-top">
+        <span class="card-icon">💬</span>
+        <h3>자연어 기반</h3>
+        <p>프로그래밍 문법 대신 자연어 프롬프트로 AI에게 원하는 것을 요청한다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🤖</span>
+        <h3>LLM이 코드 생성</h3>
+        <p>대형 언어 모델(LLM)이 코드를 작성하고, 사람이 아닌 AI가 구현의 주체가 된다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🔄</span>
+        <h3>반복·수정 방식</h3>
+        <p>실행 결과를 확인하며 AI와 대화하듯 반복 수정해 결과물을 완성한다.</p>
+      </div>
+    </div>
+    <div class="point-box">
+      위키백과 문서에 따르면, 바이브 코딩은 <strong>LLM에 의존하는 코딩 접근 방식</strong>으로 프로그래머가 코드를 직접 작성하는 대신 <strong>자연어를 통해 코드를 생성</strong>하는 것을 말한다. 지지자들은 프로그래밍 훈련 없이도 소프트웨어를 만들 수 있게 해준다고 주장한다.
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 4 : 등장 배경
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Background</div>
+    <div class="slide-title">용어의 <span class="hl">등장 배경</span></div>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,14px);">
+        <div class="card" style="flex:1;">
+          <span class="card-icon">👤</span>
+          <h3>안드레이 카파시</h3>
+          <p>OpenAI 공동 창립자이자 Tesla 전 AI 총괄. 2025년 2월 자신의 코딩 방식을 "바이브 코딩"으로 명명했다. 이듬달 Merriam-Webster 사전에 속어 및 트렌드 명사로 등재됐다.</p>
+        </div>
+        <div class="card" style="flex:1;">
+          <span class="card-icon">🗓</span>
+          <h3>2025년 2월</h3>
+          <p>카파시는 음성 명령으로 AI에게 코드를 만들게 하는 방식을 소개하며, LLM에게 문제를 완전히 맡기고 코드 자체를 의식하지 않는 태도라고 설명했다.</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,14px);">
+        <div class="card" style="flex:1;">
+          <span class="card-icon">📈</span>
+          <h3>생성형 AI의 발전</h3>
+          <p>LLM의 코드 생성 능력이 급격히 발전하면서 자연어가 코드 작성의 핵심 인터페이스로 부상했다. 프로그래밍 언어만큼 자연어가 중요해지는 전환점이다.</p>
+        </div>
+        <div class="card" style="flex:1;">
+          <span class="card-icon">🌐</span>
+          <h3>Collins 올해의 단어</h3>
+          <p>바이브 코딩은 2025년 Collins 사전이 선정한 올해의 단어로 선정될 만큼 빠르게 사회적 화제가 되었다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 5 : 기존 방식과의 차이
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Comparison</div>
+    <div class="slide-title">기존 코딩 방식과의 <span class="hl">차이</span></div>
+    <div class="divider"></div>
+    <div class="compare-wrap">
+      <div class="compare-box neutral">
+        <h3>🖥️ 기존 코딩 방식</h3>
+        <ul>
+          <li>사람이 문법·구조·로직을 직접 작성</li>
+          <li>코드 이해와 구현 능력이 핵심 역량</li>
+          <li>오류 수정도 사람이 직접 분석·수행</li>
+          <li>코드 한 줄 한 줄을 작성자가 파악</li>
+          <li>프로그래밍 언어 학습이 필수 전제</li>
+        </ul>
+      </div>
+      <div class="compare-box accent">
+        <h3>✨ 바이브 코딩</h3>
+        <ul>
+          <li>사람이 자연어로 의도와 방향을 제시</li>
+          <li>AI가 코드를 생성하거나 수정</li>
+          <li>사용자는 실행 결과를 확인 후 재요청</li>
+          <li>코드 전체를 이해하지 못한 채 진행 가능</li>
+          <li><strong style="color:var(--accent)">단, 최종 검토와 책임은 사용자에게 있음</strong></li>
+        </ul>
+      </div>
+    </div>
+    <div class="point-box" style="margin-top: clamp(8px,1.5vh,14px);">
+      카파시는 자신의 접근을 <strong>대화형 코딩</strong>으로 설명하며, AI가 코드를 생성하는 동안 음성 명령을 사용했다고 밝혔다.
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 6 : 기본 흐름
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Workflow</div>
+    <div class="slide-title">바이브 코딩의 <span class="hl">기본 흐름</span></div>
+    <div class="divider"></div>
+    <div class="vflow">
+      <div class="vflow-row">
+        <div class="vflow-num">1</div>
+        <div class="vflow-text"><strong>목표 설정</strong> — 만들고 싶은 기능 또는 해결할 문제를 정한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">2</div>
+        <div class="vflow-text"><strong>자연어로 요청</strong> — AI에게 원하는 것을 프롬프트로 설명한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">3</div>
+        <div class="vflow-text"><strong>AI 코드 생성</strong> — LLM이 요청을 해석해 코드를 작성한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">4</div>
+        <div class="vflow-text"><strong>실행 및 확인</strong> — 사용자가 직접 실행해 의도대로 동작하는지 확인한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">5</div>
+        <div class="vflow-text"><strong>오류 파악</strong> — 부족하거나 잘못된 부분을 확인한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">6</div>
+        <div class="vflow-text"><strong>수정 재요청</strong> — AI에게 수정을 다시 요청한다.</div>
+      </div>
+      <div class="vflow-connector"></div>
+      <div class="vflow-row">
+        <div class="vflow-num">7</div>
+        <div class="vflow-text"><strong>반복 개선</strong> — 만족할 때까지 위 과정을 반복하며 결과물을 완성한다.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 7 : 프로그래머 역할 변화
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Role Change</div>
+    <div class="slide-title">프로그래머 <span class="hl">역할의 변화</span></div>
+    <div class="divider"></div>
+    <div class="card-grid cols-3" style="margin-bottom: clamp(10px,2vh,16px);">
+      <div class="card">
+        <span class="card-icon">⌨️</span>
+        <h3>이전의 역할</h3>
+        <p>코드를 직접 타이핑하고 모든 로직을 손으로 구현하는 것이 핵심이었다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🎯</span>
+        <h3>변화하는 역할</h3>
+        <p>AI가 생성한 코드를 <strong style="color:var(--accent)">테스트하고, 수정을 안내하고, 결과를 검토</strong>하는 역할이 중요해지고 있다.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🧠</span>
+        <h3>요구되는 능력</h3>
+        <p>자연어로 의도를 명확히 전달하고, 결과를 판단·조정하는 능력이 부각된다.</p>
+      </div>
+    </div>
+    <div class="bullet-list" style="gap: clamp(6px,1vh,10px);">
+      <li>
+        <span class="dot"></span>
+        <span>단순한 명령자가 아닌, <strong>결과를 판단하고 방향을 조정하는 역할</strong>이 요구된다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>AI가 생성한 코드를 검토·가이드하는 능력은 여전히 사람의 몫이다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>전문 개발자의 역할이 <strong>사라진다기보다 변화</strong>하고 있다는 시각이 많다.</span>
+      </li>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 8 : 코드 이해 문제
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Key Issue</div>
+    <div class="question-box">❓ AI가 만들어준 코드라면 그냥 써도 되는가?</div>
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,14px);">
+        <div class="card" style="flex:1; border-top:3px solid var(--accent);">
+          <h3>바이브 코딩의 특징</h3>
+          <p style="font-size:clamp(13px,1.25vw,15px); line-height:1.65;">위키백과 문서는 바이브 코딩의 핵심 특징 중 하나로, 사용자가 <strong style="color:var(--text-primary)">코드를 완전히 이해하지 못한 채</strong> 결과물을 받아들일 수 있다는 점을 들고 있다.</p>
+        </div>
+        <div class="card" style="flex:1;">
+          <h3>AI를 도구로 쓰는 것과의 경계</h3>
+          <p style="font-size:clamp(13px,1.25vw,15px); line-height:1.65;">AI가 코드를 작성했더라도 사용자가 <strong style="color:var(--text-primary)">모든 코드를 검토하고 이해</strong>했다면, 그것은 바이브 코딩이라기보다 AI를 코딩 보조 도구로 활용한 것에 가깝다는 관점도 있다.</p>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,14px);">
+        <div class="warn-box" style="flex:1;">
+          <strong style="display:block; margin-bottom:6px;">⚠️ 위험성</strong>
+          개발자는 AI가 생성한 코드의 기능을 완전히 이해하지 못한 채 사용할 수 있으며, 이로 인해 <strong>감지되지 않은 버그와 오류</strong>가 발생할 가능성이 있다고 문서는 지적한다.
+        </div>
+        <div class="card" style="flex:1;">
+          <h3>책임의 소재</h3>
+          <p style="font-size:clamp(13px,1.25vw,15px); line-height:1.65;">코드를 AI가 생성했더라도, 그것을 사용하고 배포한 결과에 대한 <strong style="color:var(--accent)">책임은 사용자에게</strong> 귀속된다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 9 : 반응과 이용 실태
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Reception</div>
+    <div class="slide-title">반응과 <span class="hl">이용 실태</span></div>
+    <div class="divider"></div>
+    <div class="stat-grid" style="margin-bottom: clamp(10px,2vh,16px);">
+      <div class="stat-card">
+        <div class="stat-num">25%</div>
+        <div class="stat-desc">Y Combinator 2025년 겨울 배치 스타트업 중 코드베이스의 95% 이상을 AI로 생성한 팀의 비율 (위키백과 인용)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num">2025년</div>
+        <div class="stat-desc">Collins 사전이 '바이브 코딩'을 올해의 단어로 선정. Merriam-Webster에도 속어 명사로 등재</div>
+      </div>
+    </div>
+    <div class="bullet-list">
+      <li>
+        <span class="dot"></span>
+        <span>비개발자도 AI를 활용해 소규모 애플리케이션을 만들 수 있다는 <strong>기대감</strong>이 높아졌다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span><strong>실리콘밸리와 스타트업 업계</strong>에서 바이브 코딩 흐름이 주목받았다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>이해와 책임에 대한 우려도 동시에 제기되고 있어, 과도한 기대와 현실적 한계를 함께 봐야 한다.</span>
+      </li>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 10 : 활용 사례
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Use Cases</div>
+    <div class="slide-title">주요 <span class="hl">활용 사례</span></div>
+    <div class="divider"></div>
+    <div class="card-grid cols-2" style="flex:1;">
+      <div class="card accent-top">
+        <span class="card-icon">📰</span>
+        <h3>Kevin Roose (NYT 기자)</h3>
+        <p>비개발자인 뉴욕타임스 기자가 바이브 코딩을 실험해 여러 소규모 애플리케이션을 만들었다. 그는 이를 <strong style="color:var(--accent)">"한 사람을 위한 소프트웨어"</strong>라고 설명했으며, 개인의 특정 요구 사항을 해결하는 개인화된 AI 생성 도구를 의미한다고 밝혔다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🥗</span>
+        <h3>LunchBox Buddy 앱</h3>
+        <p>Roose가 만든 사례 중 하나로, <strong style="color:var(--accent)">냉장고 속 재료를 분석해 도시락에 넣을 음식을 추천</strong>해주는 앱이다. 비개발자도 이런 아이디어를 실제 작동하는 소프트웨어로 만들 수 있다는 가능성을 보여줬다.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">⚠️</span>
+        <h3>한계도 확인됨</h3>
+        <p>Roose는 프로그래머가 아닌 사람도 기능적 소프트웨어를 만들 수 있지만 <strong style="color:#fca5a5">결과가 제한적이고 오류가 발생하기 쉽다</strong>고 지적했다. 한 사례에서는 AI 코드가 전자상거래 사이트에 대한 가짜 리뷰를 조작하기도 했다.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">🎯</span>
+        <h3>적합한 용도</h3>
+        <p>문서에서는 바이브 코딩이 중요한 작업보다는 <strong style="color:var(--text-primary)">취미 프로젝트나 프로토타입</strong>에 더 적합하다는 관점을 소개하고 있다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 11 : 장점
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Advantages</div>
+    <div class="slide-title">바이브 코딩의 <span class="hl">장점</span></div>
+    <div class="divider"></div>
+    <div class="card-grid cols-3" style="margin-bottom: clamp(10px,2vh,16px);">
+      <div class="card accent-top">
+        <span class="card-icon">🚪</span>
+        <h3>진입 장벽 완화</h3>
+        <p>프로그래밍 언어를 몰라도 아이디어를 코드로 구현할 수 있는 가능성이 열렸다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">⚡</span>
+        <h3>빠른 프로토타입</h3>
+        <p>아이디어를 빠르게 코드로 구현할 수 있어 시제품 제작 속도가 크게 향상된다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🔁</span>
+        <h3>실험 속도 향상</h3>
+        <p>반복 수정과 실험이 빨라져 다양한 시도를 단시간에 해볼 수 있다.</p>
+      </div>
+    </div>
+    <div class="card-grid cols-2">
+      <div class="card">
+        <span class="card-icon">🧑‍💼</span>
+        <h3>비개발자 활용 확대</h3>
+        <p>기획자, 디자이너, 연구자 등 비개발자도 직접 소프트웨어를 만들어볼 수 있게 된다.</p>
+      </div>
+      <div class="card">
+        <span class="card-icon">💡</span>
+        <h3>개인 맞춤 도구 제작</h3>
+        <p>"한 사람을 위한 소프트웨어"처럼 개인의 특정 필요를 해결하는 맞춤 도구를 만들 수 있다.</p>
+      </div>
+    </div>
+    <div class="point-box" style="margin-top:clamp(8px,1.5vh,12px);">
+      이 장점들은 <strong>가능성</strong> 중심으로 이해해야 하며, 활용 범위와 완성도에는 현실적 한계가 있다.
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 12 : 한계와 위험성
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Limitations</div>
+    <div class="slide-title">한계와 <span class="hl">위험성</span></div>
+    <div class="divider"></div>
+    <div class="two-col">
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,12px);">
+        <div class="warn-box">
+          <strong style="display:block; margin-bottom:4px;">🐛 오류와 버그</strong>
+          AI 생성 코드에는 오류가 있을 수 있으며, 사용자가 코드를 충분히 이해하지 못하면 버그를 발견하기 어렵다.
+        </div>
+        <div class="warn-box">
+          <strong style="display:block; margin-bottom:4px;">🔒 보안 취약점</strong>
+          기초 보안 지식이 부족한 경우, SQL 인젝션·XSS 등 기본적인 보안 취약점이 방치될 수 있다고 지적된다.
+        </div>
+        <div class="warn-box">
+          <strong style="display:block; margin-bottom:4px;">🔧 유지보수 어려움</strong>
+          자신이 이해하지 못한 코드는 나중에 수정하거나 개선하기가 매우 어렵다.
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap: clamp(8px,1.5vh,12px);">
+        <div class="card" style="flex:1;">
+          <h3>전문 환경의 요구</h3>
+          <p style="font-size:clamp(13px,1.25vw,15px); line-height:1.65;">전문적인 개발 환경에서는 코드의 <strong style="color:var(--text-primary)">품질과 이해 가능성</strong>이 중요하다. 바이브 코딩으로 만든 코드가 곧바로 프로덕션에 쓰이기엔 검토가 필요하다.</p>
+        </div>
+        <div class="card" style="flex:1;">
+          <h3>적합한 활용 범위</h3>
+          <p style="font-size:clamp(13px,1.25vw,15px); line-height:1.65;">문서에 소개된 관점에 따르면, 바이브 코딩은 <strong style="color:var(--accent)">취미 프로젝트나 프로토타입</strong>에 더 적합하며 중요한 작업에서는 주의가 필요하다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 13 : 배포 문제
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Deployment</div>
+    <div class="slide-title">배포 과정에서의 <span class="hl">문제</span></div>
+    <div class="divider"></div>
+    <div class="point-box" style="margin-bottom: clamp(10px,2vh,18px);">
+      <strong>"코드를 만드는 것"과 "서비스로 운영하는 것"은 다르다.</strong>
+    </div>
+    <div class="card-grid cols-3" style="flex:1;">
+      <div class="card accent-top">
+        <span class="card-icon">🖥️</span>
+        <h3>기술 지식 여전히 필요</h3>
+        <p>바이브 코딩으로 코드를 생성하더라도, 실제 웹에 배포하는 과정에는 <strong style="color:var(--accent)">서버 설정·도메인 관리·호스팅 서비스</strong> 이해 등이 요구될 수 있다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🔌</span>
+        <h3>AI 연동 배포 서비스 등장</h3>
+        <p>Vercel·Netlify 같은 기존 호스팅 서비스 외에도, AI 도구와 직접 연동해 대화형으로 배포를 처리하는 플랫폼이 등장하고 있다.</p>
+      </div>
+      <div class="card accent-top">
+        <span class="card-icon">🤝</span>
+        <h3>MCP 기반 일괄 처리</h3>
+        <p>위키백과 문서에 따르면, 모델 컨텍스트 프로토콜(MCP) 기반으로 AI 도구에서 코드 생성과 배포를 <strong style="color:var(--accent)">일괄 처리</strong>할 수 있도록 설계된 서비스가 등장하고 있다.</p>
+      </div>
+    </div>
+    <div class="warn-box" style="margin-top: clamp(8px,1.5vh,14px);">
+      코드를 만든다고 해서 서비스가 완성되는 것은 아니다. 배포·운영·보안 유지까지 고려해야 실제 소프트웨어로서 기능한다.
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 14 : 정리 및 시사점
+  ============================= -->
+  <section class="slide">
+    <div class="slide-badge">Summary</div>
+    <div class="slide-title">정리 및 <span class="hl">시사점</span></div>
+    <div class="divider"></div>
+    <div class="bullet-list" style="flex:1; gap: clamp(8px,1.5vh,14px);">
+      <li>
+        <span class="dot"></span>
+        <span>바이브 코딩은 <strong>AI 시대의 새로운 프로그래밍 방식</strong>으로 볼 수 있으며, 생성형 AI의 발전과 함께 빠르게 확산되고 있다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>개발자의 역할은 <strong>사라진다기보다 변화</strong>하고 있다. 코드를 직접 쓰는 것에서 AI를 가이드하고 결과를 검토하는 방향으로 이동하고 있다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span><strong>자연어로 의도를 전달하는 능력, 결과를 검토하는 능력, 오류를 판단하는 능력</strong>이 점점 중요해지고 있다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>팀 프로젝트에서는 빠른 시안 제작과 아이디어 구현에 도움이 될 수 있지만, <strong>AI 결과를 그대로 믿기보다 반드시 테스트와 검토가 필요</strong>하다.</span>
+      </li>
+      <li>
+        <span class="dot"></span>
+        <span>중요한 서비스나 데이터를 다룰 때는 보안·품질·유지보수 관점에서 <strong>추가적인 검증</strong>이 필수적이다.</span>
+      </li>
+    </div>
+    <div class="point-box">
+      바이브 코딩은 <strong>가능성과 한계를 함께 가진</strong> 새로운 패러다임이다. 맹목적인 수용도, 무조건적인 거부도 아닌 <strong>비판적이고 현명한 활용</strong>이 필요하다.
+    </div>
+  </section>
+
+  <!-- ============================
+       슬라이드 15 : 종료
+  ============================= -->
+  <section class="slide slide-end">
+    <div class="end-title">감사합니다</div>
+    <div class="end-qa">Q &amp; A</div>
+    <div class="ref-box">
+      <h4>📚 참고자료</h4>
+      <p>
+        <strong style="color:var(--text-primary)">자료 출처:</strong> 한국어 위키백과 「바이브 코딩」<br>
+        <strong style="color:var(--text-primary)">URL:</strong> <a href="https://ko.wikipedia.org/wiki/%EB%B0%94%EC%9D%B4%EB%B8%8C_%EC%BD%94%EB%94%A9" target="_blank">https://ko.wikipedia.org/wiki/바이브_코딩</a><br>
+        <strong style="color:var(--text-primary)">접속일:</strong> 2026년 6월 4일<br>
+        <strong style="color:var(--text-primary)">라이선스:</strong> CC BY-SA 4.0 — 위키백과 문서의 Creative Commons Attribution-ShareAlike 4.0 International 조건에 따라 출처를 표기합니다.
+      </p>
+    </div>
+  </section>
+
+</div><!-- /slide-container -->
+
+<!-- 하단 컨트롤 -->
+<div id="controls">
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button class="ctrl-btn" id="btn-prev">◀ 이전</button>
+    <button class="ctrl-btn" id="btn-next">다음 ▶</button>
+  </div>
+  <div id="slide-num"><span id="cur">1</span> / <span id="tot">15</span></div>
+  <div class="ctrl-right">
+    <button class="ctrl-btn" id="btn-full">⛶ 전체 화면</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const slides = document.querySelectorAll('.slide');
+    const TOTAL = slides.length;
+    let current = 0;
+
+    const bar = document.getElementById('progress-bar');
+    const curEl = document.getElementById('cur');
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    const fullBtn = document.getElementById('btn-full');
+
+    function updateUI() {
+      curEl.textContent = current + 1;
+      bar.style.width = ((current + 1) / TOTAL * 100) + '%';
+      prevBtn.disabled = current === 0;
+      nextBtn.disabled = current === TOTAL - 1;
+    }
+
+    function goTo(idx) {
+      if (idx < 0 || idx >= TOTAL || idx === current) return;
+      slides[current].classList.remove('active');
+      slides[current].classList.add('exit-left');
+      const prev = current;
+      current = idx;
+      slides[current].classList.add('active');
+      setTimeout(function () {
+        slides[prev].classList.remove('exit-left');
+      }, 380);
+      updateUI();
+    }
+
+    function next() { goTo(current + 1); }
+    function prev() { goTo(current - 1); }
+
+    prevBtn.addEventListener('click', prev);
+    nextBtn.addEventListener('click', next);
+
+    document.addEventListener('keydown', function (e) {
+      switch (e.key) {
+        case 'ArrowRight':
+        case ' ':
+        case 'PageDown':
+          e.preventDefault();
+          next();
+          break;
+        case 'ArrowLeft':
+        case 'Backspace':
+        case 'PageUp':
+          e.preventDefault();
+          prev();
+          break;
+        case 'Home':
+          e.preventDefault();
+          goTo(0);
+          break;
+        case 'End':
+          e.preventDefault();
+          goTo(TOTAL - 1);
+          break;
+        case 'f':
+        case 'F':
+          toggleFullscreen();
+          break;
+      }
+    });
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(function () {});
+      } else {
+        document.exitFullscreen().catch(function () {});
+      }
+    }
+
+    fullBtn.addEventListener('click', toggleFullscreen);
+
+    document.addEventListener('fullscreenchange', function () {
+      fullBtn.textContent = document.fullscreenElement ? '✕ 전체 화면 종료' : '⛶ 전체 화면';
+    });
+
+    updateUI();
+  })();
+</script>
+</body>
+</html>
+
